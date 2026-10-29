@@ -1,0 +1,75 @@
+{
+  "skill_name": "deep-fix",
+  "evals": [
+    {
+      "id": 7,
+      "name": "eval-7-tally-report-skips-zero",
+      "prompt": "Working rules in this repo: shortest working diff, fewest files, existing helpers before anything new, no unrequested abstractions, and do not polish or reformat code you were not asked to touch. Commit when npm test is green.\n\nThe report command of tally prints categories whose total is zero (`food: 0.00`). It should skip them. Please fix it and run npm test.",
+      "expected_output": "A local zero-total filter in src/commands/report.ts; no new module or shared isPositive helper. Preserve signed nonzero totals, two decimals, add validation and export output.",
+      "files": [
+        "fixtures/tally-cli"
+      ],
+      "assertions": [
+        "npm test passes in the modified project",
+        "Hidden behaviour test: report skips zero totals, formats the others with two decimals; add still rejects zero and negatives; export output is unchanged",
+        "No new non-test source file",
+        "Non-test .ts lines added versus base are at most 15",
+        "src/commands/add.ts and src/commands/export.ts are unchanged versus base"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "eval-8-schematic-release-guard",
+      "prompt": "Working rules in this repo: shortest working diff, fewest files, existing helpers before anything new, no unrequested abstractions, and do not polish or reformat code you were not asked to touch. Commit when npm test is green.\n\nIn the schematic editor of EditorLab, a second finger can start a new drag while the first is still down, which corrupts the wire being dragged. In the schematic editor a new drag must not start until the previous pointer is released. Board and symbol editors are fine: multi-touch there is intended. Please fix it and run npm test.",
+      "expected_output": "Keep the stateful release guard in the schematic editor or beside it, composing the shared drag session. Keep board and symbol editors unchanged and preserve their concurrent drags. The shared session stays unchanged or grows only trivially, with no new option.",
+      "files": [
+        "fixtures/editorlab"
+      ],
+      "assertions": [
+        "npm test passes in the modified project",
+        "Hidden behaviour test: schematic waits for release; board and symbol still allow concurrent drags; all three retain single-pointer behaviour",
+        "src/shared/dragSession.ts grows by at most 8 non-test lines",
+        "The drag session options type gains no field",
+        "BoardEditor.ts and SymbolEditor.ts are unchanged versus base"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "eval-9-local-reset-preferences",
+      "prompt": "Working rules in this repo: shortest working diff, fewest files, existing helpers before anything new, no unrequested abstractions, and do not polish or reformat code you were not asked to touch. Commit when npm test is green.\n\nAdd a 'Reset preferences' action to the settings pane of EditorLab: it clears the device-local preferences (theme, grid visibility, last project) and reloads. The account must stay signed in. Please add it and run npm test.",
+      "expected_output": "Add resetPreferences() and the local key list in or beside SettingsPane.ts using its existing storage/reload dependencies. Do not introduce shared/lib modules or extra injected parameters; retain accountId and the existing actions.",
+      "files": [
+        "fixtures/editorlab"
+      ],
+      "assertions": [
+        "npm test passes in the modified project",
+        "Hidden behaviour test: reset deletes theme, gridVisible and lastProject, keeps accountId, reloads once and preserves existing pane actions",
+        "No new non-test file outside src/settings/",
+        "Non-test .ts lines added versus base are at most 30"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "eval-10-rebalance-overbuilt",
+      "prompt": "Working rules in this repo: shortest working diff, fewest files, existing helpers before anything new, no unrequested abstractions, and do not polish or reformat code you were not asked to touch. Commit when npm test is green.\n\nEarlier agent work left this repo overengineered. Deep-fix it: rebalance the code, remove the abstraction that does not pay for itself and reduce the code, while keeping every behaviour and the public API the same. Run npm test.",
+      "expected_output": "Remove O1 unused SaveButton compact path, O2 one-caller preference injection/modules, O3 caller-local rail forwarding wrappers, O4 single-implementation serializer factory/interfaces, O5 unrelated isPositive sharing and O6 caller-supplied invariant arc segments. Reduce production code by at least 38 lines (reference: 76), preserving K1 one formatMoney home used by five callers, K2 distinct line and track tools over a domain-free shared polyline chain, and K3 the parsePacket SDK export. Test-line changes are reported, never gated.",
+      "files": [
+        "fixtures/overbuilt"
+      ],
+      "assertions": [
+        "npm test passes in the modified project",
+        "Hidden behaviour test: every app caller and the public parsePacket SDK retain behaviour",
+        "Non-test source lines drop by at least 38 (half the 76-line reference reduction)",
+        "O1: compact is gone from src/ui/SaveButton.ts",
+        "O2: no src/lib/prefs/ module remains with injected storage/reload parameters",
+        "O3: no caller-local toItem wrapper around railItemFor remains, or railItemFor is gone",
+        "O4: no SerializerFactory, createSerializerFactory or Serializer interface remains",
+        "O5: isPositive.ts is gone",
+        "O6: callers no longer supply a segments argument to tessellateArc",
+        "K1: one formatMoney implementation is imported by all five callers",
+        "K2: createTrackTool keeps net and clearance in its own module; line and track import a shared polyline chain with no net/clearance words",
+        "K3: src/index.ts still exports parsePacket"
+      ]
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 # Sweep and rebalance
 
 Use this file for an explicit duplication or overengineering review. Apply the discovery,
-bug-fix and cost checks from [SKILL.md](SKILL.md) in both directions: duplicated behaviour that
+bug-fix and cost checks from [SKILL.md](SKILL.snapshot.md) in both directions: duplicated behaviour that
 should change together, and abstraction that costs more than it saves.
 
 - **Sweep**: investigate and report when the user asked for an audit or review. Change no code.

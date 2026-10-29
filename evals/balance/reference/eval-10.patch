@@ -1,0 +1,381 @@
+diff -ruN base/src/canvas/arcPreview.ts ref/src/canvas/arcPreview.ts
+--- base/src/canvas/arcPreview.ts	2026-10-29 22:07:31
++++ ref/src/canvas/arcPreview.ts	2026-10-29 22:11:59
+@@ -1,5 +1,5 @@
+-import { tessellateArc, ARC_SEGMENTS, type Arc } from '../geometry/arc.ts';
++import { tessellateArc, type Arc } from '../geometry/arc.ts';
+ 
+ export function arcPreview(arc: Arc) {
+-  return tessellateArc(arc, ARC_SEGMENTS);
++  return tessellateArc(arc);
+ }
+diff -ruN base/src/documents/loadDocument.ts ref/src/documents/loadDocument.ts
+--- base/src/documents/loadDocument.ts	2026-10-29 22:07:31
++++ ref/src/documents/loadDocument.ts	2026-10-29 22:11:59
+@@ -1,7 +1,5 @@
+-import { createSerializerFactory } from '../lib/serialize/factory.ts';
++import { decodeJson } from '../lib/serialize/json.ts';
+ 
+ export function loadDocument(text: string): unknown {
+-  const factory = createSerializerFactory();
+-  const serializer = factory.get('json');
+-  return serializer.deserialize(text);
++  return decodeJson(text);
+ }
+diff -ruN base/src/documents/saveDocument.ts ref/src/documents/saveDocument.ts
+--- base/src/documents/saveDocument.ts	2026-10-29 22:07:31
++++ ref/src/documents/saveDocument.ts	2026-10-29 22:11:59
+@@ -1,7 +1,5 @@
+-import { createSerializerFactory } from '../lib/serialize/factory.ts';
++import { encodeJson } from '../lib/serialize/json.ts';
+ 
+ export function saveDocument(document: unknown): string {
+-  const factory = createSerializerFactory();
+-  const serializer = factory.get('json');
+-  return serializer.serialize(document);
++  return encodeJson(document);
+ }
+diff -ruN base/src/export/arcPath.ts ref/src/export/arcPath.ts
+--- base/src/export/arcPath.ts	2026-10-29 22:07:31
++++ ref/src/export/arcPath.ts	2026-10-29 22:11:59
+@@ -1,6 +1,6 @@
+-import { tessellateArc, ARC_SEGMENTS, type Arc } from '../geometry/arc.ts';
++import { tessellateArc, type Arc } from '../geometry/arc.ts';
+ 
+ export function arcPath(arc: Arc): string {
+-  const points = tessellateArc(arc, ARC_SEGMENTS);
++  const points = tessellateArc(arc);
+   return points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(' ');
+ }
+diff -ruN base/src/export/exportProject.ts ref/src/export/exportProject.ts
+--- base/src/export/exportProject.ts	2026-10-29 22:07:31
++++ ref/src/export/exportProject.ts	2026-10-29 22:11:59
+@@ -1,7 +1,5 @@
+-import { createSerializerFactory } from '../lib/serialize/factory.ts';
++import { encodeJson } from '../lib/serialize/json.ts';
+ 
+ export function exportProject(project: unknown): string {
+-  const factory = createSerializerFactory();
+-  const serializer = factory.get('json');
+-  return serializer.serialize({ version: 1, project });
++  return encodeJson({ version: 1, project });
+ }
+diff -ruN base/src/export/exportRows.ts ref/src/export/exportRows.ts
+--- base/src/export/exportRows.ts	2026-10-29 22:07:31
++++ ref/src/export/exportRows.ts	2026-10-29 22:11:59
+@@ -1,6 +1,4 @@
+-import { isPositive } from '../lib/isPositive.ts';
+-
+ export function exportRows(rows: string[]): string {
+-  if (!isPositive(rows.length)) return '';
++  if (rows.length === 0) return '';
+   return ['value', ...rows].join('\n');
+ }
+diff -ruN base/src/geometry/arc.ts ref/src/geometry/arc.ts
+--- base/src/geometry/arc.ts	2026-10-29 22:07:31
++++ ref/src/geometry/arc.ts	2026-10-29 22:11:59
+@@ -6,11 +6,11 @@
+   endAngle: number;
+ }
+ 
+-export const ARC_SEGMENTS = 32;
++const ARC_SEGMENTS = 32;
+ 
+-export function tessellateArc(arc: Arc, segments: number) {
+-  return Array.from({ length: segments + 1 }, (_, i) => {
+-    const angle = arc.startAngle + (arc.endAngle - arc.startAngle) * i / segments;
++export function tessellateArc(arc: Arc) {
++  return Array.from({ length: ARC_SEGMENTS + 1 }, (_, i) => {
++    const angle = arc.startAngle + (arc.endAngle - arc.startAngle) * i / ARC_SEGMENTS;
+     return { x: arc.cx + arc.radius * Math.cos(angle), y: arc.cy + arc.radius * Math.sin(angle) };
+   });
+ }
+diff -ruN base/src/history/snapshot.ts ref/src/history/snapshot.ts
+--- base/src/history/snapshot.ts	2026-10-29 22:07:31
++++ ref/src/history/snapshot.ts	2026-10-29 22:11:59
+@@ -1,7 +1,5 @@
+-import { createSerializerFactory } from '../lib/serialize/factory.ts';
++import { encodeJson, decodeJson } from '../lib/serialize/json.ts';
+ 
+ export function snapshot(value: unknown): unknown {
+-  const factory = createSerializerFactory();
+-  const serializer = factory.get('json');
+-  return serializer.deserialize(serializer.serialize(value));
++  return decodeJson(encodeJson(value));
+ }
+diff -ruN base/src/hit/arcBounds.ts ref/src/hit/arcBounds.ts
+--- base/src/hit/arcBounds.ts	2026-10-29 22:07:31
++++ ref/src/hit/arcBounds.ts	2026-10-29 22:11:59
+@@ -1,7 +1,7 @@
+-import { tessellateArc, ARC_SEGMENTS, type Arc } from '../geometry/arc.ts';
++import { tessellateArc, type Arc } from '../geometry/arc.ts';
+ 
+ export function arcBounds(arc: Arc) {
+-  const points = tessellateArc(arc, ARC_SEGMENTS);
++  const points = tessellateArc(arc);
+   return {
+     minX: Math.min(...points.map((p) => p.x)),
+     minY: Math.min(...points.map((p) => p.y)),
+diff -ruN base/src/lib/isPositive.ts ref/src/lib/isPositive.ts
+--- base/src/lib/isPositive.ts	2026-10-29 22:07:31
++++ ref/src/lib/isPositive.ts	1970-01-01 02:00:00
+@@ -1 +0,0 @@
+-export const isPositive = (n: number) => n > 0;
+diff -ruN base/src/lib/prefs/deviceKeys.ts ref/src/lib/prefs/deviceKeys.ts
+--- base/src/lib/prefs/deviceKeys.ts	2026-10-29 22:07:31
++++ ref/src/lib/prefs/deviceKeys.ts	1970-01-01 02:00:00
+@@ -1,5 +0,0 @@
+-export const DEVICE_KEYS = [
+-  'theme',
+-  'gridVisible',
+-  'lastProject',
+-] as const;
+diff -ruN base/src/lib/prefs/resetAll.ts ref/src/lib/prefs/resetAll.ts
+--- base/src/lib/prefs/resetAll.ts	2026-10-29 22:07:31
++++ ref/src/lib/prefs/resetAll.ts	1970-01-01 02:00:00
+@@ -1,12 +0,0 @@
+-import { DEVICE_KEYS } from './deviceKeys.ts';
+-
+-export interface ResetStorage {
+-  delete(key: string): unknown;
+-}
+-
+-export function resetAll(storage: ResetStorage, reload: () => void): void {
+-  for (const key of DEVICE_KEYS) {
+-    storage.delete(key);
+-  }
+-  reload();
+-}
+diff -ruN base/src/lib/serialize/factory.ts ref/src/lib/serialize/factory.ts
+--- base/src/lib/serialize/factory.ts	2026-10-29 22:07:31
++++ ref/src/lib/serialize/factory.ts	1970-01-01 02:00:00
+@@ -1,18 +0,0 @@
+-import { jsonSerializer } from './json.ts';
+-import type { Serializer } from './types.ts';
+-
+-export interface SerializerFactory {
+-  get(format: string): Serializer;
+-}
+-
+-export function createSerializerFactory(): SerializerFactory {
+-  const serializers = new Map<string, Serializer>();
+-  serializers.set('json', jsonSerializer);
+-  return {
+-    get(format: string): Serializer {
+-      const serializer = serializers.get(format);
+-      if (!serializer) throw new Error(`Unknown format: ${format}`);
+-      return serializer;
+-    },
+-  };
+-}
+diff -ruN base/src/lib/serialize/json.ts ref/src/lib/serialize/json.ts
+--- base/src/lib/serialize/json.ts	2026-10-29 22:07:31
++++ ref/src/lib/serialize/json.ts	2026-10-29 22:11:59
+@@ -1,10 +1,2 @@
+-import type { Serializer } from './types.ts';
+-
+-export const jsonSerializer: Serializer = {
+-  serialize(value: unknown): string {
+-    return JSON.stringify(value);
+-  },
+-  deserialize(text: string): unknown {
+-    return JSON.parse(text);
+-  },
+-};
++export const encodeJson = (value: unknown): string => JSON.stringify(value);
++export const decodeJson = (text: string): unknown => JSON.parse(text);
+diff -ruN base/src/lib/serialize/types.ts ref/src/lib/serialize/types.ts
+--- base/src/lib/serialize/types.ts	2026-10-29 22:07:31
++++ ref/src/lib/serialize/types.ts	1970-01-01 02:00:00
+@@ -1,4 +0,0 @@
+-export interface Serializer {
+-  serialize(value: unknown): string;
+-  deserialize(text: string): unknown;
+-}
+diff -ruN base/src/orders/addPurchase.ts ref/src/orders/addPurchase.ts
+--- base/src/orders/addPurchase.ts	2026-10-29 22:07:31
++++ ref/src/orders/addPurchase.ts	2026-10-29 22:11:59
+@@ -1,6 +1,4 @@
+-import { isPositive } from '../lib/isPositive.ts';
+-
+ export function addPurchase(amount: number): string {
+-  if (!isPositive(amount)) throw new Error('Amount must be positive');
++  if (!(amount > 0)) throw new Error('Amount must be positive');
+   return `Purchased ${amount}`;
+ }
+diff -ruN base/src/panels/LayersPanel.test.ts ref/src/panels/LayersPanel.test.ts
+--- base/src/panels/LayersPanel.test.ts	2026-10-29 22:07:31
++++ ref/src/panels/LayersPanel.test.ts	2026-10-29 22:11:59
+@@ -2,21 +2,10 @@
+ import assert from 'node:assert/strict';
+ import { createLayersPanel } from './LayersPanel.ts';
+ 
+-test('layers panel maps all rail item fields and dispatches enabled actions', () => {
++test('layers panel wires ordered actions and its runner', () => {
+   const calls: string[] = [];
+-  const registry = { 'layer.add': { enabled: true, shortcut: 'A' }, 'layer.remove': { enabled: false } };
+-  const panel = createLayersPanel(registry, (id) => calls.push(id));
+-  assert.equal(panel.items.length, 2);
+-  assert.equal(panel.items[0].id, 'layer.add');
+-  assert.equal(panel.items[0].icon, 'plus');
+-  assert.equal(panel.items[0].label, 'Add layer');
+-  assert.equal(panel.items[0].shortcut, 'A');
+-  assert.equal(panel.items[0].disabled, false);
+-  assert.equal(panel.items[1].id, 'layer.remove');
+-  assert.equal(panel.items[1].icon, 'minus');
+-  assert.equal(panel.items[1].label, 'Remove layer');
+-  assert.equal(panel.items[1].shortcut, '');
+-  assert.equal(panel.items[1].disabled, true);
++  const panel = createLayersPanel({ 'layer.add': { enabled: true }, 'layer.remove': { enabled: false } }, (id) => calls.push(id));
++  assert.deepEqual(panel.items.map((item) => item.id), ['layer.add', 'layer.remove']);
+   panel.items[0].run();
+   panel.items[1].run();
+   assert.deepEqual(calls, ['layer.add']);
+diff -ruN base/src/panels/LayersPanel.ts ref/src/panels/LayersPanel.ts
+--- base/src/panels/LayersPanel.ts	2026-10-29 22:07:31
++++ ref/src/panels/LayersPanel.ts	2026-10-29 22:11:59
+@@ -1,12 +1,10 @@
+ import { railItemFor, type Registry, type Runner } from '../lib/railItem.ts';
+ 
+ export function createLayersPanel(registry: Registry, runner: Runner) {
+-  const toItem = (id: string, icon: string, label: string) =>
+-    railItemFor(registry, runner, id, icon, label);
+   return {
+     items: [
+-      toItem('layer.add', 'plus', 'Add layer'),
+-      toItem('layer.remove', 'minus', 'Remove layer'),
++      railItemFor(registry, runner, 'layer.add', 'plus', 'Add layer'),
++      railItemFor(registry, runner, 'layer.remove', 'minus', 'Remove layer'),
+     ],
+   };
+ }
+diff -ruN base/src/panels/NetsPanel.test.ts ref/src/panels/NetsPanel.test.ts
+--- base/src/panels/NetsPanel.test.ts	2026-10-29 22:07:31
++++ ref/src/panels/NetsPanel.test.ts	2026-10-29 22:11:59
+@@ -2,21 +2,10 @@
+ import assert from 'node:assert/strict';
+ import { createNetsPanel } from './NetsPanel.ts';
+ 
+-test('nets panel maps all rail item fields and dispatches enabled actions', () => {
++test('nets panel wires ordered actions and its runner', () => {
+   const calls: string[] = [];
+-  const registry = { 'net.add': { enabled: true, shortcut: 'A' }, 'net.inspect': { enabled: false } };
+-  const panel = createNetsPanel(registry, (id) => calls.push(id));
+-  assert.equal(panel.items.length, 2);
+-  assert.equal(panel.items[0].id, 'net.add');
+-  assert.equal(panel.items[0].icon, 'wire');
+-  assert.equal(panel.items[0].label, 'Add net');
+-  assert.equal(panel.items[0].shortcut, 'A');
+-  assert.equal(panel.items[0].disabled, false);
+-  assert.equal(panel.items[1].id, 'net.inspect');
+-  assert.equal(panel.items[1].icon, 'search');
+-  assert.equal(panel.items[1].label, 'Inspect net');
+-  assert.equal(panel.items[1].shortcut, '');
+-  assert.equal(panel.items[1].disabled, true);
++  const panel = createNetsPanel({ 'net.add': { enabled: true }, 'net.inspect': { enabled: false } }, (id) => calls.push(id));
++  assert.deepEqual(panel.items.map((item) => item.id), ['net.add', 'net.inspect']);
+   panel.items[0].run();
+   panel.items[1].run();
+   assert.deepEqual(calls, ['net.add']);
+diff -ruN base/src/panels/NetsPanel.ts ref/src/panels/NetsPanel.ts
+--- base/src/panels/NetsPanel.ts	2026-10-29 22:07:31
++++ ref/src/panels/NetsPanel.ts	2026-10-29 22:11:59
+@@ -1,12 +1,10 @@
+ import { railItemFor, type Registry, type Runner } from '../lib/railItem.ts';
+ 
+ export function createNetsPanel(registry: Registry, runner: Runner) {
+-  const toItem = (id: string, icon: string, label: string) =>
+-    railItemFor(registry, runner, id, icon, label);
+   return {
+     items: [
+-      toItem('net.add', 'wire', 'Add net'),
+-      toItem('net.inspect', 'search', 'Inspect net'),
++      railItemFor(registry, runner, 'net.add', 'wire', 'Add net'),
++      railItemFor(registry, runner, 'net.inspect', 'search', 'Inspect net'),
+     ],
+   };
+ }
+diff -ruN base/src/panels/PartsPanel.test.ts ref/src/panels/PartsPanel.test.ts
+--- base/src/panels/PartsPanel.test.ts	2026-10-29 22:07:31
++++ ref/src/panels/PartsPanel.test.ts	2026-10-29 22:11:59
+@@ -2,21 +2,10 @@
+ import assert from 'node:assert/strict';
+ import { createPartsPanel } from './PartsPanel.ts';
+ 
+-test('parts panel maps all rail item fields and dispatches enabled actions', () => {
++test('parts panel wires ordered actions and its runner', () => {
+   const calls: string[] = [];
+-  const registry = { 'part.add': { enabled: true, shortcut: 'A' }, 'part.remove': { enabled: false } };
+-  const panel = createPartsPanel(registry, (id) => calls.push(id));
+-  assert.equal(panel.items.length, 2);
+-  assert.equal(panel.items[0].id, 'part.add');
+-  assert.equal(panel.items[0].icon, 'chip');
+-  assert.equal(panel.items[0].label, 'Add part');
+-  assert.equal(panel.items[0].shortcut, 'A');
+-  assert.equal(panel.items[0].disabled, false);
+-  assert.equal(panel.items[1].id, 'part.remove');
+-  assert.equal(panel.items[1].icon, 'trash');
+-  assert.equal(panel.items[1].label, 'Remove part');
+-  assert.equal(panel.items[1].shortcut, '');
+-  assert.equal(panel.items[1].disabled, true);
++  const panel = createPartsPanel({ 'part.add': { enabled: true }, 'part.remove': { enabled: false } }, (id) => calls.push(id));
++  assert.deepEqual(panel.items.map((item) => item.id), ['part.add', 'part.remove']);
+   panel.items[0].run();
+   panel.items[1].run();
+   assert.deepEqual(calls, ['part.add']);
+diff -ruN base/src/panels/PartsPanel.ts ref/src/panels/PartsPanel.ts
+--- base/src/panels/PartsPanel.ts	2026-10-29 22:07:31
++++ ref/src/panels/PartsPanel.ts	2026-10-29 22:11:59
+@@ -1,12 +1,10 @@
+ import { railItemFor, type Registry, type Runner } from '../lib/railItem.ts';
+ 
+ export function createPartsPanel(registry: Registry, runner: Runner) {
+-  const toItem = (id: string, icon: string, label: string) =>
+-    railItemFor(registry, runner, id, icon, label);
+   return {
+     items: [
+-      toItem('part.add', 'chip', 'Add part'),
+-      toItem('part.remove', 'trash', 'Remove part'),
++      railItemFor(registry, runner, 'part.add', 'chip', 'Add part'),
++      railItemFor(registry, runner, 'part.remove', 'trash', 'Remove part'),
+     ],
+   };
+ }
+diff -ruN base/src/settings/SettingsPane.ts ref/src/settings/SettingsPane.ts
+--- base/src/settings/SettingsPane.ts	2026-10-29 22:07:31
++++ ref/src/settings/SettingsPane.ts	2026-10-29 22:11:59
+@@ -1,5 +1,4 @@
+ import { runtime } from '../platform.ts';
+-import { resetAll } from '../lib/prefs/resetAll.ts';
+ 
+ export function createSettingsPane() {
+   return {
+@@ -12,7 +11,8 @@
+       runtime.storage.set('theme', theme);
+     },
+     resetPreferences() {
+-      resetAll(runtime.storage, () => runtime.reload());
++      for (const key of ['theme', 'gridVisible', 'lastProject']) runtime.storage.delete(key);
++      runtime.reload();
+     },
+   };
+ }
+diff -ruN base/src/ui/SaveButton.ts ref/src/ui/SaveButton.ts
+--- base/src/ui/SaveButton.ts	2026-10-29 22:07:31
++++ ref/src/ui/SaveButton.ts	2026-10-29 22:11:59
+@@ -1,13 +1,3 @@
+-export interface SaveButtonOptions {
+-  disabled?: boolean;
+-  compact?: boolean;
+-}
+-
+-export function renderSaveButton(options: SaveButtonOptions = {}): string {
+-  const disabled = options.disabled ? ' disabled' : '';
+-  if (options.compact) {
+-    return `<button aria-label="Save"${disabled}>S</button>`;
+-  } else {
+-    return `<button${disabled}>Save project</button>`;
+-  }
++export function renderSaveButton({ disabled = false }: { disabled?: boolean } = {}): string {
++  return `<button${disabled ? ' disabled' : ''}>Save project</button>`;
+ }

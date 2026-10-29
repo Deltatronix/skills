@@ -1,0 +1,49 @@
+diff -ruN base/src/editors/schematic/SchematicEditor.test.ts ref/src/editors/schematic/SchematicEditor.test.ts
+--- base/src/editors/schematic/SchematicEditor.test.ts	1970-01-01 02:00:00
++++ ref/src/editors/schematic/SchematicEditor.test.ts	2026-10-29 22:11:59
+@@ -0,0 +1,16 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { createSchematicEditor } from './SchematicEditor.ts';
++
++test('only the owner release unlocks another drag, including after cancel', () => {
++  const editor = createSchematicEditor();
++  const first = { pointerId: 1, x: 0, y: 0 };
++  const second = { pointerId: 2, x: 0, y: 0 };
++  assert.equal(editor.pointerDown(first), true);
++  assert.equal(editor.pointerDown(second), false);
++  editor.cancel(1);
++  editor.pointerUp(second);
++  assert.equal(editor.pointerDown(second), false);
++  editor.pointerUp(first);
++  assert.equal(editor.pointerDown(second), true);
++});
+diff -ruN base/src/editors/schematic/SchematicEditor.ts ref/src/editors/schematic/SchematicEditor.ts
+--- base/src/editors/schematic/SchematicEditor.ts	2026-10-29 22:06:25
++++ ref/src/editors/schematic/SchematicEditor.ts	2026-10-29 22:11:59
+@@ -1,13 +1,22 @@
+-import { createDragSession, type Drag } from '../../shared/dragSession.ts';
++import { createDragSession, type Drag, type PointerEvent } from '../../shared/dragSession.ts';
+ 
+ export function createSchematicEditor() {
+   const shapes: (Drag & { kind: string })[] = [];
+   const session = createDragSession({ onCommit: (drag) => shapes.push({ kind: 'schematic', ...drag }) });
++  let owner: number | null = null;
+   return {
+     kind: 'schematic',
+-    pointerDown: session.pointerDown,
++    pointerDown(event: PointerEvent) {
++      if (owner !== null) return false;
++      const started = session.pointerDown(event);
++      if (started) owner = event.pointerId;
++      return started;
++    },
+     pointerMove: session.pointerMove,
+-    pointerUp: session.pointerUp,
++    pointerUp(event: PointerEvent) {
++      if (event.pointerId === owner) owner = null;
++      return session.pointerUp(event);
++    },
+     cancel: session.cancel,
+     get active() { return session.active; },
+     get shapes() { return shapes; },

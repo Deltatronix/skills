@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repo_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 
 # A separate root lets tests exercise backups without changing real agent settings.
 install_root=${SKILLS_INSTALL_HOME:-$HOME}
@@ -35,3 +35,26 @@ for skill_file in "$repo_dir"/skills/*/SKILL.md; do
     link_skill shared "$install_root/.agents/skills"
     link_skill claude "$install_root/.claude/skills"
 done
+
+# Codex reads only AGENTS.md by default; these repos keep their agent rules in CLAUDE.md.
+codex_config="$install_root/.codex/config.toml"
+fallback_line='project_doc_fallback_filenames = ["CLAUDE.md"]'
+if [ -L "$codex_config" ]; then
+    printf 'codex: config.toml is a symlink, add project_doc_fallback_filenames to its target yourself\n'
+elif [ ! -d "$install_root/.codex" ]; then
+    printf 'codex: not installed, skipped\n'
+elif [ ! -e "$codex_config" ]; then
+    printf '%s\n' "$fallback_line" > "$codex_config"
+    printf 'codex: created config.toml with project_doc_fallback_filenames\n'
+elif grep -q '^[[:blank:]]*project_doc_fallback_filenames' "$codex_config"; then
+    printf 'codex: project_doc_fallback_filenames already set\n'
+else
+    mkdir -p "$backup_dir"
+    cp -p "$codex_config" "$backup_dir/codex-config.toml"
+    tmp_config="$codex_config.tmp.$$"
+    # cp -p first so the rewrite keeps the file's permissions.
+    cp -p "$codex_config" "$tmp_config"
+    { printf '%s\n' "$fallback_line"; cat "$codex_config"; } > "$tmp_config"
+    mv "$tmp_config" "$codex_config"
+    printf 'codex: set project_doc_fallback_filenames\n'
+fi

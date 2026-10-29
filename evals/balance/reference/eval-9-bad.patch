@@ -1,0 +1,45 @@
+diff -ruN base/src/lib/prefs/resetAll.ts bad/src/lib/prefs/resetAll.ts
+--- base/src/lib/prefs/resetAll.ts	1970-01-01 02:00:00
++++ bad/src/lib/prefs/resetAll.ts	2026-10-29 22:11:59
+@@ -0,0 +1,6 @@
++import type { PreferenceStorage } from '../../settings/SettingsPane.ts';
++
++export function resetAll(storage: PreferenceStorage, reload: () => void) {
++  for (const key of ['theme', 'gridVisible', 'lastProject']) storage.delete(key);
++  reload();
++}
+diff -ruN base/src/settings/SettingsPane.ts bad/src/settings/SettingsPane.ts
+--- base/src/settings/SettingsPane.ts	2026-10-29 22:06:25
++++ bad/src/settings/SettingsPane.ts	2026-10-29 22:11:59
+@@ -1,3 +1,5 @@
++import { resetAll } from '../lib/prefs/resetAll.ts';
++
+ export interface PreferenceStorage {
+   get(key: string): string | undefined;
+   set(key: string, value: string): unknown;
+@@ -6,6 +8,9 @@
+ 
+ export function createSettingsPane({ storage, reload }: { storage: PreferenceStorage; reload: () => void }) {
+   return {
++    resetPreferences() {
++      resetAll(storage, reload);
++    },
+     toggleGrid() {
+       const visible = storage.get('gridVisible') !== 'true';
+       storage.set('gridVisible', String(visible));
+diff -ruN base/src/settings/resetPreferences.test.ts bad/src/settings/resetPreferences.test.ts
+--- base/src/settings/resetPreferences.test.ts	1970-01-01 02:00:00
++++ bad/src/settings/resetPreferences.test.ts	2026-10-29 22:11:59
+@@ -0,0 +1,12 @@
++import { test } from 'node:test';
++import assert from 'node:assert/strict';
++import { createSettingsPane } from './SettingsPane.ts';
++
++test('reset keeps the account and reloads after clearing local preferences', () => {
++  const storage = new Map([['theme', 'dark'], ['gridVisible', 'true'], ['lastProject', 'p'], ['accountId', 'a']]);
++  let reloads = 0;
++  const pane = createSettingsPane({ storage, reload: () => reloads++ });
++  pane.resetPreferences();
++  assert.deepEqual([...storage], [['accountId', 'a']]);
++  assert.equal(reloads, 1);
++});

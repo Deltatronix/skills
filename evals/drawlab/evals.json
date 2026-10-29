@@ -1,0 +1,127 @@
+{
+  "skill_name": "deep-fix",
+  "evals": [
+    {
+      "id": 1,
+      "name": "eval-1-schematic-line-tool",
+      "prompt": "Working rules in this repo: shortest working diff, fewest files, existing helpers before anything new, no unrequested abstractions, and do not polish or reformat code you were not asked to touch. Commit when npm test is green.\n\nAdd a wire drawing tool to the schematic page of DrawLab. It should draw polylines the way the sketch page's pen does and be exposed on the page the same way (click / move / finish / cancel / preview / shapes), but without the sketch's grid snapping, and with one addition: when the user clicks within 8 px of the wire's first vertex, the click must snap onto that first vertex and finish the wire as a closed shape. The sketch and board pages must keep behaving exactly as they do now. Run npm test when you're done.",
+      "expected_output": "One shared polyline tool (the sketch pen extracted out of SketchPage.ts, merged with the board track tool) with options such as gridSize / angleStep / snapClosed; sketch keeps grid snapping, board keeps 45\u00b0, schematic opts into the closing snap; no page-local copies remain; tests cover the options.",
+      "files": [
+        "evals/fixtures/drawlab"
+      ],
+      "assertions": [
+        "npm test passes in the modified project",
+        "Hidden behaviour test: sketch (grid snapping, no closing snap, undo, readout) and board (45\u00b0 tracks) behave exactly as before",
+        "Hidden behaviour test: schematic wire snaps a click within 8px onto the first vertex and closes; a farther click keeps drawing with no grid snapping",
+        "Exactly one polyline-tool implementation exists in src: sketch pen, board tracks and schematic wires are all served by one module",
+        "Sketch, schematic and board pages all import the polyline tool from the same module",
+        "The polyline-tool home lives in a shared layer, outside every pages/<page>/ folder",
+        "The home contains no page-named flags or branches (no sketch/schematic/board/footprint identifiers in its code)",
+        "Grid, angle and snap logic lives in the home: page modules contain no geometry math",
+        "The sketch page no longer holds its own polyline state machine (it delegates to the home)",
+        "A test file exercises the closing-snap option against the shared tool",
+        "Unrelated code untouched: units.ts and the footprint page are unchanged versus the baseline commit"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "eval-2-board-dimension-rounding",
+      "prompt": "Working rules in this repo: shortest working diff, fewest files, existing helpers before anything new, no unrequested abstractions, and do not polish or reformat code you were not asked to touch. Commit when npm test is green.\n\nBug on the board page of DrawLab: when I add a dimension of 1002 mils the label reads \"25.450799999999997 mm\". It should read \"25.4508 mm\". Please fix it and run npm test.",
+      "expected_output": "One shared formatMm with the rounding fix; pages/board/units.ts and the inline sketch conversion are gone; board, sketch and footprint all import the shared function so the fix reaches every page.",
+      "files": [
+        "evals/fixtures/drawlab"
+      ],
+      "assertions": [
+        "npm test passes in the modified project",
+        "Hidden behaviour test: board dimension label, sketch readout AND footprint pad label all show 25.4508 mm for 1002 mils (fix reaches every page)",
+        "Exactly one mils-to-mm formatter implementation exists in src (excluding tests)",
+        "Sketch, board and footprint pages all import the formatter from the same module",
+        "The formatter home lives in a shared layer, outside every pages/<page>/ folder",
+        "pages/board/units.ts is gone and the sketch page no longer carries its own inline conversion",
+        "A test file covers the rounding fix against the shared formatter",
+        "Unrelated code untouched: trackTool.ts, SchematicPage.ts, svg.ts and geometry.ts are unchanged versus the baseline commit"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "eval-3-footprint-45deg-line-tool",
+      "prompt": "Working rules in this repo: shortest working diff, fewest files, existing helpers before anything new, no unrequested abstractions, and do not polish or reformat code you were not asked to touch. Commit when npm test is green.\n\nThe footprint page of DrawLab needs a line tool: polylines exposed on the page the same way as the sketch pen and the board tracks (click / move / finish / cancel / preview / shapes). Footprint lines must be constrained to 45\u00b0 steps exactly like board tracks (each new vertex snaps to the nearest 45\u00b0 direction from the previous vertex, keeping the segment's length), with no grid snapping. The sketch, schematic and board pages must keep working exactly as they do now. Run npm test when done.",
+      "expected_output": "The sketch pen and the board track tool merged into one shared polyline tool with an angle option; footprint opts into 45\u00b0 with no grid; sketch and board unchanged in behaviour; trackTool.ts and the inline sketch state machine are gone.",
+      "files": [
+        "evals/fixtures/drawlab"
+      ],
+      "assertions": [
+        "npm test passes in the modified project",
+        "Hidden behaviour test: sketch (grid, free angles), board (45\u00b0 tracks) and schematic behave exactly as before",
+        "Hidden behaviour test: footprint vertices snap to the nearest 45\u00b0 direction from the previous vertex with the length kept and no grid snapping",
+        "Exactly one polyline-tool implementation exists in src: sketch pen, board tracks and footprint lines are all served by one module",
+        "Sketch, board and footprint pages all import the polyline tool from the same module",
+        "The polyline-tool home lives in a shared layer, outside every pages/<page>/ folder",
+        "The home contains no page-named flags or branches (no sketch/schematic/board/footprint identifiers in its code)",
+        "Grid and angle logic lives in the home: page modules contain no geometry math",
+        "Neither pages/board/trackTool.ts nor the sketch page holds a polyline implementation any more",
+        "Tests exercise the angle option against the shared tool",
+        "Unrelated code untouched: units.ts and SchematicPage.ts are unchanged versus the baseline commit"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "eval-4-footprint-toolbar-header",
+      "prompt": "Working rules in this repo: shortest working diff, fewest files, existing helpers before anything new, no unrequested abstractions, and do not polish or reformat code you were not asked to touch. Commit when npm test is green.\n\nThe footprint page of DrawLab needs a toolbar with the Line tool button (the tool itself is already wired on that page) and a last-saved header like the other pages have. Run npm test when done.",
+      "expected_output": "One shared date formatter (the three inline formats merged into one, all pages repointed) and one action definition for the Line tool (icon, label, shortcut) rendered on sketch, board and footprint; footprint gets the toolbar and header through those homes.",
+      "files": [
+        "evals/fixtures/drawlab-ui"
+      ],
+      "assertions": [
+        "npm test passes in the modified project",
+        "Hidden UI test: footprint has the toolbar and header; the Line button has the same icon, label and shortcut on sketch, board and footprint; the last-saved header reads the same on every page",
+        "Exactly one date-formatting implementation exists in src (excluding tests)",
+        "The date formatter lives in a shared layer, outside every pages/<page>/ folder",
+        "Exactly one definition of the Line tool button (icon, label, shortcut) exists in src, outside every pages/<page>/ folder",
+        "Sketch, board and footprint pages all import the formatter and the action definition from the shared homes",
+        "A test file covers the shared date formatter",
+        "Unrelated code untouched: lineTool.ts and units.ts are unchanged versus the baseline commit"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "eval-5-schematic-wire-keeps-track-identity",
+      "prompt": "Working rules in this repo: shortest working diff, fewest files, existing helpers before anything new, no unrequested abstractions, and do not polish or reformat code you were not asked to touch. Commit when npm test is green.\n\nAdd a wire drawing tool to the schematic page of DrawLab. It should draw polylines the way the sketch page's pen and the board page's track tool do, and be exposed on the page the same way (click / move / finish / cancel / preview / shapes) \u2014 without the sketch's grid snapping and without the board's routing rules \u2014 with one addition: when the user clicks within 8 px of the wire's first vertex, the click must snap onto that first vertex and finish the wire as a closed shape. The sketch and board pages must keep behaving exactly as they do now. Run npm test when you're done.",
+      "expected_output": "One shared polyline chain primitive in the shared layer (extracted from the sketch pen and the board track tool) with the closing snap as an option; the sketch pen and the schematic wire are thin tools on it; the board track tool KEEPS its own home and every identity behaviour (net inheritance, pad snap, clearance refusal, width, layer, 45\u00b0) \u2014 none of that moves into the shared primitive. A written plan with a behaviour inventory precedes the code.",
+      "files": [
+        "evals/fixtures/drawlab-tools"
+      ],
+      "assertions": [
+        "npm test passes in the modified project",
+        "Hidden behaviour test: sketch (grid, free angles, undo, readout) and board (net inheritance, pad snap, clearance refusal, width/layer, 45\u00b0, hit-test, dimensions) behave exactly as before",
+        "Hidden behaviour test: schematic wire snaps a click within 8px onto the first vertex and closes; a farther click keeps drawing with no grid snapping",
+        "Exactly one shared drawing-chain home outside pages/ is reached by both the sketch page and the board track tool",
+        "The shared home carries no tool identity: no net/pad/clearance/width/layer/track identifiers and no page names in its code",
+        "The board track tool keeps its own module exporting createTrackTool with its net and clearance rules",
+        "The schematic page builds its wire on the shared home",
+        "A test file exercises the closing-snap option against the shared home",
+        "A written plan (outputs/PLAN.md) with a behaviour inventory table precedes the code",
+        "Unrelated code untouched: units.ts and the footprint page are unchanged versus the baseline commit"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "eval-6-sketch-hit-test-bug",
+      "prompt": "Working rules in this repo: shortest working diff, fewest files, existing helpers before anything new, no unrequested abstractions, and do not polish or reformat code you were not asked to touch. Commit when npm test is green.\n\nBug on the sketch page of DrawLab: clicking on the middle of a long stroke doesn't select it \u2014 only a click right next to one of its vertices does. On the board page, clicking anywhere along a track selects it, which is what the sketch should do too. Please fix it and run npm test.",
+      "expected_output": "One point-to-polyline distance home in the shared geometry layer; the sketch page and the board track tool both select through it; the sketch bug is fixed at that home; the track tool keeps its own home and identity; nothing else is merged. A written plan precedes the code.",
+      "files": [
+        "evals/fixtures/drawlab-tools"
+      ],
+      "assertions": [
+        "npm test passes in the modified project",
+        "Hidden behaviour test: a mid-segment click selects the sketch stroke, vertex hits still work, the last-drawn stroke wins; sketch drawing and the board track tool behave exactly as before",
+        "Exactly one point-to-polyline distance implementation exists in src, in the shared layer outside pages/",
+        "The sketch page and the board track tool both select through that shared home",
+        "The board track tool keeps its own module exporting createTrackTool with its net and clearance rules",
+        "A test file covers the mid-segment hit against the shared home",
+        "A written plan (outputs/PLAN.md) with a behaviour inventory table precedes the code",
+        "Unrelated code untouched: units.ts, SchematicPage, FootprintPage and BoardPage.ts are unchanged versus the baseline commit"
+      ]
+    }
+  ]
+}
