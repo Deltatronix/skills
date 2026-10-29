@@ -5,8 +5,10 @@ Personal agent skills, kept in Git and shared across local coding tools.
 ## Included
 
 - **deep-fix**: discover existing implementations, fix shared causes, and simplify overengineered code while preserving contracts and resource constraints.
+- **brief-ship**: autonomous builder mode that delivers value first, completes the shipping cycle, and reports briefly.
+- **orchestrated-build**: delegate planning and coding to agents one step at a time, with a dependency ledger and file-based specifications.
 
-The skill includes its sweep/rebalance guide and qualitative regression cases. The cases are decision checks, not proof of correctness for an application.
+The deep-fix skill includes its sweep/rebalance guide and qualitative regression cases. The cases are decision checks, not proof of correctness for an application.
 
 ## Install globally on macOS or Linux
 
@@ -18,7 +20,7 @@ cd "$HOME/Documents/skills"
 ./install.sh
 ```
 
-The installer links two user-level locations to this checkout:
+The installer links each skill into two user-level locations from this checkout:
 
 | Tool | Skill root |
 |---|---|

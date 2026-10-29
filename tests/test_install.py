@@ -16,23 +16,26 @@ class InstallerTests(unittest.TestCase):
             root = Path(tmp)
             env = os.environ.copy()
             env.update(SKILLS_INSTALL_HOME=tmp)
-            shared = root / ".agents/skills/deep-fix"
-            claude = root / ".claude/skills/deep-fix"
-            claude.mkdir(parents=True)
-            (claude / "old.md").write_text("preserve existing skill data")
-            shared.parent.mkdir(parents=True)
-            shared.symlink_to(claude)
+            locations = []
+            for name in ("deep-fix", "brief-ship", "orchestrated-build"):
+                shared = root / ".agents/skills" / name
+                claude = root / ".claude/skills" / name
+                claude.mkdir(parents=True)
+                (claude / "old.md").write_text(f"preserve {name} skill data")
+                shared.parent.mkdir(parents=True, exist_ok=True)
+                shared.symlink_to(claude)
+                locations.extend((path, REPO / "skills" / name) for path in (shared, claude))
             subprocess.run(["sh", str(REPO / "install.sh")], env=env, check=True,
                            capture_output=True, text=True)
-            locations = [shared, claude]
-            for path in locations:
+            for path, source in locations:
                 self.assertTrue(path.is_symlink())
-                self.assertEqual(path.resolve(), SOURCE)
+                self.assertEqual(path.resolve(), source)
             backups = list((root / ".local/share/agent-skills-backups").iterdir())
             self.assertEqual(len(backups), 1)
-            self.assertEqual((backups[0] / "claude-deep-fix/old.md").read_text(),
-                             "preserve existing skill data")
-            self.assertTrue((backups[0] / "shared-deep-fix").is_symlink())
+            for name in ("deep-fix", "brief-ship", "orchestrated-build"):
+                self.assertEqual((backups[0] / f"claude-{name}/old.md").read_text(),
+                                 f"preserve {name} skill data")
+                self.assertTrue((backups[0] / f"shared-{name}").is_symlink())
             subprocess.run(["sh", str(REPO / "install.sh")], env=env, check=True,
                            capture_output=True, text=True)
             self.assertEqual(list((root / ".local/share/agent-skills-backups").iterdir()),
