@@ -1,0 +1,202 @@
+{
+  "skill_name": "deep-fix",
+  "purpose": "Behavioral regression cases for balancing reuse against abstraction cost. Evaluate the decision and supporting evidence, not exact wording or one prescribed file structure.",
+  "cases": [
+    {
+      "id": "incidental-similarity",
+      "prompt": "Two HTTP handlers have count > 0 checks. One validates a purchased quantity; the other checks whether a paginated result has any elements. Should this change extract a helper?",
+      "checks": [
+        "Keeps the expressions local because their meanings and reasons to change differ.",
+        "Does not create a shared helper based on a second occurrence alone."
+      ]
+    },
+    {
+      "id": "shared-formatting-rule",
+      "prompt": "The same cents-to-currency display rule exists in three UI pages. A rounding defect is reported on one. All three are in one application, with the same currency and locale contract. The app already has a formatting module used by all three pages. Fix it.",
+      "checks": [
+        "Uses the established formatting owner for the common rule and migrates the affected copies.",
+        "Preserves the contract and verifies the rounding behavior and caller wiring without creating a formatting framework."
+      ]
+    },
+    {
+      "id": "external-sdk-consumers",
+      "prompt": "An installed SDK exposes a small parse_packet function. No in-repository production code calls it, and its only visible uses are tests. A cleanup asks for unused exports.",
+      "checks": [
+        "Does not infer that the public API is unused from local reference counts.",
+        "Checks external/API compatibility and deprecation policy before proposing removal."
+      ]
+    },
+    {
+      "id": "equal-independent-policies",
+      "prompt": "Two service clients both currently pass timeout_ms=5000 into a retry utility. Each client owns an independently configurable timeout. Remove redundant configuration.",
+      "checks": [
+        "Preserves caller-owned policy despite equal current values.",
+        "Does not replace independent settings with a callee-owned constant merely to reduce arguments."
+      ]
+    },
+    {
+      "id": "cohesive-state-machine",
+      "prompt": "A cohesive parser has six options and 350 lines. Its state machine is documented and directly tested. A bug affects one transition. Split it as part of the fix?",
+      "checks": [
+        "Fixes the transition and adds appropriate regression coverage.",
+        "Uses cohesion and actual coupling as evidence; does not split solely because of counts."
+      ]
+    },
+    {
+      "id": "hardware-seam",
+      "prompt": "A repository has one interface and one production implementation for flash storage, plus a fake in tests. The interface isolates hardware access for the firmware domain. An audit flags it as a one-caller abstraction.",
+      "checks": [
+        "Recognizes hardware isolation and the test seam as concrete reasons for the interface.",
+        "Does not inline or remove it based solely on one production implementation."
+      ]
+    },
+    {
+      "id": "different-date-contracts",
+      "prompt": "A date appears as localized text on a dashboard and as an ISO 8601 UTC timestamp in an audit protocol. Both currently use different functions. Make dates consistent.",
+      "checks": [
+        "Keeps display and protocol contracts distinct.",
+        "Clarifies the intended consistency if necessary rather than silently changing the wire protocol."
+      ]
+    },
+    {
+      "id": "cross-language-boundaries",
+      "prompt": "Two separately released products implement a packet decoder in different languages. One runs in an ISR with fixed buffers; the other streams files. They share a versioned wire specification. Stop protocol fixes drifting between the products.",
+      "checks": [
+        "Retains appropriate implementation and release boundaries.",
+        "Proposes a shared authoritative contract and conformance vectors/tests, or justified generation, instead of forcing a shared runtime or language.",
+        "Preserves ISR allocation, blocking, ownership, and timing constraints."
+      ]
+    },
+    {
+      "id": "urgent-fix-before-migration",
+      "prompt": "A production incident affects three legacy copies of a retry loop. A broad extraction changes lock ownership and the on-call team cannot safely validate it during the outage. The correction itself is a one-condition fix valid for all three copies. Ship the fix.",
+      "checks": [
+        "Applies the safe correction to all affected in-scope copies and verifies it.",
+        "Records the remaining duplication and migration risk without making consolidation a precondition for the incident fix."
+      ]
+    },
+    {
+      "id": "unpublished-work",
+      "prompt": "A colleague on an offline computer may be implementing the capability. Your local tree has no implementation, and shared branches have no visible change. Add the feature.",
+      "checks": [
+        "Checks available integration and ownership records and states the visibility limit.",
+        "Does not claim the local scan proves uniqueness or pretend to acquire a distributed lock.",
+        "Proceeds within authorization when there is no concrete conflicting owner or required missing contract; does not send an unauthorized message."
+      ]
+    },
+    {
+      "id": "shared-code-separate-state",
+      "prompt": "Two independent editor instances already use the same drawing implementation but keep separate undo histories and subscriptions. Reduce duplicate state management.",
+      "checks": [
+        "Distinguishes reuse of implementation from shared mutable instances.",
+        "Preserves independent state and lifetimes; simplifies duplicated management logic only if it is actually present."
+      ]
+    },
+    {
+      "id": "integration-coverage",
+      "prompt": "A shared helper's unit tests pass, but one of four platform adapters still calls its former inline implementation. How should verification catch the incomplete migration?",
+      "checks": [
+        "Checks actual caller wiring and materially different platform configurations, not only helper unit tests.",
+        "Searches and accounts for remaining old implementations; retains useful integration tests."
+      ]
+    },
+    {
+      "id": "cache-with-no-old-benchmark",
+      "prompt": "A pool has no recorded historical benchmark. It supplies stable buffer identities to an asynchronous driver and enforces backpressure. A rebalance proposes deleting every unmeasured cache or pool. What should happen?",
+      "checks": [
+        "Establishes current behavior and cost before removal, including stable identity and backpressure.",
+        "Does not equate missing historical measurements with proof of uselessness."
+      ]
+    },
+    {
+      "id": "fixed-registry-lifecycle",
+      "prompt": "A registry has a fixed set of handlers. It also initializes dependencies in order and tears them down in reverse order on failure. A cleanup says a fixed registry should always become direct calls.",
+      "checks": [
+        "Preserves ordering, failure cleanup and lifecycle behavior in any replacement.",
+        "Decides based on total cost and useful responsibility, not static handler count alone."
+      ]
+    },
+    {
+      "id": "short-shared-invariant",
+      "prompt": "Two routes must enforce the same permission policy, currently duplicated as the same one-line predicate. A rebalance rule says one-liners must always stay inline. Should that rule decide this case?",
+      "checks": [
+        "Recognizes that a short expression can own shared policy that must change together.",
+        "Uses the established authorization owner if appropriate and avoids a helper based merely on syntax."
+      ]
+    },
+    {
+      "id": "obsolete-caller-compensation",
+      "prompt": "A shared unit conversion used to return a value offset by +1. A caller subtracts 1 with a comment naming that defect. The conversion is now corrected at its owner. Complete the fix across callers.",
+      "checks": [
+        "Finds and removes the now-obsolete subtraction so the caller does not double-correct.",
+        "Verifies the caller path as well as the shared conversion and looks for equivalent compensations."
+      ]
+    },
+    {
+      "id": "intentional-caller-rounding",
+      "prompt": "A shared floating-point formatting defect is fixed. One caller still rounds to two decimals because its public invoice contract requires two decimal places. It has no evidence of being a workaround. Should the caller rounding be removed?",
+      "checks": [
+        "Preserves the independent invoice precision contract.",
+        "Requires evidence that compensation is obsolete before removing it; does not treat all caller rounding as a workaround."
+      ]
+    },
+    {
+      "id": "generated-owner",
+      "prompt": "Two generated clients have the same wrong field type. Their checked-in outputs come from a shared schema, and the repository documents generation commands. Fix the drift.",
+      "checks": [
+        "Finds whether the defect belongs to the schema, template or generator and fixes the actual source.",
+        "Regenerates and verifies required checked-in outputs rather than hand-patching only generated copies."
+      ]
+    },
+    {
+      "id": "distinct-data-representations",
+      "prompt": "A wire UserPayload type and an internal User type both contain an email string. The wire schema is separately versioned and rejects extra fields; the domain model owns persistence and additional private state. A cleanup proposes one definition for every similar type.",
+      "checks": [
+        "Compares semantic contracts and preserves the legitimate wire/domain boundary.",
+        "Does not merge types based solely on common fields or names; permits explicit conversion at the boundary."
+      ]
+    },
+    {
+      "id": "late-overlapping-implementation",
+      "prompt": "You are ready to hand off a new shared retry helper. Another agent may have landed overlapping work since your initial search. Your touched shared file has also changed. What should happen before integration?",
+      "checks": [
+        "Rechecks relevant current files and shared integration/WIP state.",
+        "Reconciles overlapping implementations and preserves other edits within the authorized workflow.",
+        "Does not reset others\u2019 changes, assume a default branch name, or publish without authorization."
+      ]
+    },
+    {
+      "id": "affected-target-matrix",
+      "prompt": "A change modifies common driver code and a branch compiled only for board B. Host and board A tests pass, but board B needs a proprietary toolchain unavailable on this machine. Is verification complete?",
+      "checks": [
+        "Identifies board B as a materially different affected configuration requiring validation.",
+        "Runs useful available checks and precisely reports the unavailable toolchain/target check.",
+        "Does not claim host or board A success proves board B or build a new target framework for this task."
+      ]
+    },
+    {
+      "id": "recurring-duplication-guard",
+      "prompt": "The same accidental direct date formatting has returned three times after being moved behind a UI formatter. The repository already has a linter that can restrict this exact pattern in the affected display layer. What should the consolidation include?",
+      "checks": [
+        "Considers a small reliable rule in the existing lint setup after establishing the formatter boundary.",
+        "Keeps legitimate protocol formatting exceptions and avoids a general duplicate-detection framework or per-helper registration system."
+      ]
+    },
+    {
+      "id": "compatibility-adapter",
+      "prompt": "Consolidating internal parsers would make a published SDK function a thin forwarding wrapper around the new implementation. Out-of-tree clients still call the old function. A cleanup flags all forwarding wrappers for deletion.",
+      "checks": [
+        "Retains a compatibility entry point or adapter that preserves the supported public contract.",
+        "Follows existing deprecation policy rather than treating thinness as evidence of uselessness."
+      ]
+    },
+    {
+      "id": "discoverable-new-layer",
+      "prompt": "A new shared geometry layer is correctly placed and used by three tools, but existing repository agent guidance directs future contributors only to per-tool code. How should this change leave a discoverable result?",
+      "checks": [
+        "Adds a concise pointer to the layer in suitable existing architecture or agent guidance when needed.",
+        "Uses clear domain naming and documents meaningful boundaries without creating a helper registry or duplicating API documentation."
+      ]
+    }
+  ]
+}
